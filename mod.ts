@@ -22,9 +22,8 @@ function assert($: unknown): asserts $ {
 }
 const regex = (
   $: TemplateStringsArray,
-  file: { fileName: string },
-) =>
-  RegExp(`${$[0]}(?:[^"]*?/)?${file.fileName.replaceAll(".", "\\.")}${$[1]}`);
+  file: string,
+) => RegExp(`${$[0]}(?:[^"]*?/)?${file.replaceAll(".", "\\.")}${$[1]}`);
 /** Initializes the plugin, will update config and bundle assets. */
 export default (): PluginOption => ({
   name: "vite-plugin-inline",
@@ -51,21 +50,19 @@ export default (): PluginOption => ({
         const g = bundle[js];
         assert(g.type === "chunk"), this.info(`inlining: ${js}`), e.push(js);
         f.source = f.source.replace(
-          regex`(<script[^>]*?) src="${g}"([^>]*>)(</script>)`,
-          `$1$2${
-            g.code.replace(/("?)__VITE_PRELOAD__\1/g, "void 0")
-              .replace(/<(\/script>|!--)/g, "\\x3C$1")
-          }$3`,
-        ).replace(
-          /(<script type="module") crossorigin>\s*\(function(?: polyfill)?\(\)\s*\{.*?\}\)\(\);/s,
-          "$1>",
-        );
+          regex`(<script[^>]*?) src="${g.fileName}"([^>]*>)(</script>)`,
+          (_, $1, $2, $3) =>
+            `${$1}${$2}${
+              g.code.replace(/("?)__VITE_PRELOAD__\1/g, "void 0")
+                .replace(/<(\/script>|!--)/g, "\\x3C$1")
+            }${$3}`,
+        ).replace(/(<script type="module").*?\}\)\(\);/s, "$1>");
       }
       for (const css of d) {
         const g = bundle[css];
         assert(g.type === "asset"), this.info(`inlining: ${css}`), e.push(css);
         f.source = f.source.replace(
-          regex`<link[^>]*? href="${g}"[^>]*>`,
+          regex`<link[^>]*? href="${g.fileName}"[^>]*>`,
           `<style>${g.source}</style>`,
         ).replace(/\s*\/\*.*?\*\/\s*/gs, "");
       }

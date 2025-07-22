@@ -21,5 +21,11 @@
       ],
       "exclude": ["ban-types", "no-cond-assign", "no-explicit-any"]
     }
+  },
+  "imports": {
+    "@deno/dnt": "jsr:@deno/dnt@^0.42.3"
+  },
+  "tasks": {
+    "build": "deno run --allow-all ./build.ts"
   }
 }

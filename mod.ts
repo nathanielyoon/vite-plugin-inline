@@ -56,7 +56,10 @@ export default (): PluginOption => ({
             g.code.replace(/("?)__VITE_PRELOAD__\1/g, "void 0")
               .replace(/<(\/script>|!--)/g, "\\x3C$1")
           }$3`,
-        ).replace(/(<script type="module").*?\}\)\(\)[;,]?/s, "$1>");
+        ).replace(
+          /(<script type="module") crossorigin>\s*\(function(?: polyfill)?\(\)\s*\{.*?\}\)\(\);/s,
+          "$1>",
+        );
       }
       for (const css of d) {
         const g = bundle[css];

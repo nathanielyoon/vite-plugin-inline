@@ -13,7 +13,7 @@ await build({
     license: "GPL-3.0-or-later",
     repository: {
       type: "git",
-      url: "git+https://github.com/nathanielyoon/vite-plugin-inline",
+      url: "git+https://github.com/nathanielyoon/vite-plugin-inline.git",
     },
   },
   typeCheck: false,

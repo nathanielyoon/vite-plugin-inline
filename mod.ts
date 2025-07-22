@@ -25,6 +25,7 @@ const regex = (
   file: { fileName: string },
 ) =>
   RegExp(`${$[0]}(?:[^"]*?/)?${file.fileName.replaceAll(".", "\\.")}${$[1]}`);
+/** Initializes the plugin, will update config and bundle assets. */
 export default (): PluginOption => ({
   name: "vite-plugin-inline",
   config: ($) => {

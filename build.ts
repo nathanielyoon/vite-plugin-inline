@@ -8,7 +8,13 @@ await build({
   shims: {},
   package: {
     name: "@nyoon/vite-plugin-inline",
+    description: "Vite plugin to inline everything into a single HTML file.",
     version: Deno.args[0],
+    license: "GPL-3.0-or-later",
+    repository: {
+      type: "git",
+      url: "git+https://github.com/nathanielyoon/vite-plugin-inline",
+    },
   },
   typeCheck: false,
   test: false,

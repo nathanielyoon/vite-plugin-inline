@@ -1,0 +1,71 @@
+/**
+ * Vite plugin to inline everything into a single HTML file, simplified from an
+ * [existing plugin](https://github.com/richardtallent/vite-plugin-singlefile).
+ *
+ * @example
+ * ```ts
+ * import { defineConfig } from "npm:rolldown-vite";
+ * import inline from "jsr:@nyoon/vite-plugin-inline";
+ *
+ * export default defineConfig({
+ *   plugins: [inline()],
+ * });
+ * ```
+ *
+ * @module
+ */
+
+import type { PluginOption } from "npm:rolldown-vite@^7.0.10";
+
+function assert($: unknown): asserts $ {
+  if (!$) throw Error();
+}
+const regex = (
+  $: TemplateStringsArray,
+  file: { fileName: string },
+) =>
+  RegExp(`${$[0]}(?:[^"]*?/)?${file.fileName.replaceAll(".", "\\.")}${$[1]}`);
+export default (): PluginOption => ({
+  name: "vite-plugin-inline",
+  config: ($) => {
+    ($.build ??= {}).cssCodeSplit = false, $.build.assetsDir = "";
+    $.build.assetsInlineLimit = $.build.chunkSizeWarningLimit = 1e9;
+    const a = ($.build.rollupOptions ??= {}).output ??= {};
+    if (Array.isArray(a)) a.forEach(($) => $.inlineDynamicImports = true);
+    else a.inlineDynamicImports = true;
+  },
+  enforce: "post",
+  generateBundle(_, bundle) {
+    const [a, b, c, d] = Object.keys(bundle).reduce<string[][]>((files, $) => (
+      files[
+        /\.(?:(html?)|([mc]?js)|(css))$/.exec($)?.findLastIndex(Boolean) ?? 0
+      ].push($), files
+    ), [[], [], [], []]);
+    for (const other of a) this.warn(`uninlined: ${other}`);
+    const e = [];
+    for (const html of b) {
+      const f = bundle[html];
+      assert(f.type === "asset" && typeof f.source === "string");
+      for (const js of c) {
+        const g = bundle[js];
+        assert(g.type === "chunk"), this.info(`inlining: ${js}`), e.push(js);
+        f.source = f.source.replace(
+          regex`(<script[^>]*?) src="${g}"([^>]*>)(</script>)`,
+          `$1$2${
+            g.code.replace(/("?)__VITE_PRELOAD__\1/g, "void 0")
+              .replace(/<(\/script>|!--)/g, "\\x3C$1")
+          }$3`,
+        ).replace(/(<script type="module").*?\}\)\(\)[;,]?/s, "$1>");
+      }
+      for (const css of d) {
+        const g = bundle[css];
+        assert(g.type === "asset"), this.info(`inlining: ${css}`), e.push(css);
+        f.source = f.source.replace(
+          regex`<link[^>]*? href="${g}"[^>]*>`,
+          `<style>${g.source}</style>`,
+        ).replace(/\s*\/\*.*?\*\/\s*/gs, "");
+      }
+    }
+    for (const name of e) delete bundle[name];
+  },
+});
